@@ -45,14 +45,17 @@ const App: React.FC = () => {
   const [mobileTab, setMobileTab] = useState<'receipt' | 'summary'>('receipt');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{title: string, message: string, onConfirm: () => void} | null>(null);
+
   // Prevent scrolling on body when modal/chat is open on mobile
   useEffect(() => {
-    if (isMobileChatOpen || selectedPerson) {
+    if (isMobileChatOpen || selectedPerson || confirmModal) {
         document.body.style.overflow = 'hidden';
     } else {
         document.body.style.overflow = '';
     }
-  }, [isMobileChatOpen, selectedPerson]);
+  }, [isMobileChatOpen, selectedPerson, confirmModal]);
 
   // --- Actions ---
 
@@ -70,31 +73,38 @@ const App: React.FC = () => {
       setShowMenu(false);
   };
 
-  const handleResetClick = () => {
-      if(window.confirm("Are you sure you want to clear the current receipt and start over?")) {
-          resetApp();
-      }
+  const requestReset = () => {
+      setConfirmModal({
+          title: "Start Over?",
+          message: "Are you sure you want to clear the current receipt and start from scratch?",
+          onConfirm: () => resetApp()
+      });
+      setShowMenu(false);
   };
 
-  const clearAssignments = () => {
-      if (window.confirm("This will remove all person assignments. The receipt items will remain. Continue?")) {
-          setReceiptData(prev => {
-              if (!prev) return null;
-              return {
-                  ...prev,
-                  items: prev.items.map(item => ({ ...item, assignedTo: [] })),
-                  fixedContributions: {},
-                  discount: undefined
-              };
-          });
-          setMessages(prev => [...prev, {
-              id: `sys-${Date.now()}`,
-              role: 'model',
-              text: "I've cleared all assignments. You can start splitting from scratch.",
-              timestamp: new Date()
-          }]);
-          setShowMenu(false);
-      }
+  const requestClearAssignments = () => {
+      setConfirmModal({
+          title: "Clear Assignments?",
+          message: "This will remove all person assignments. The receipt items will remain. This action cannot be undone.",
+          onConfirm: () => {
+            setReceiptData(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    items: prev.items.map(item => ({ ...item, assignedTo: [] })),
+                    fixedContributions: {},
+                    discount: undefined
+                };
+            });
+            setMessages(prev => [...prev, {
+                id: `sys-${Date.now()}`,
+                role: 'model',
+                text: "I've cleared all assignments. You can start splitting from scratch.",
+                timestamp: new Date()
+            }]);
+          }
+      });
+      setShowMenu(false);
   };
 
   const processFile = async (file: File) => {
@@ -282,6 +292,7 @@ const App: React.FC = () => {
                     const { amount } = call.args;
                     const oldTip = newTip;
                     newTip = Number(amount);
+                    // Adjust total by the difference in tip
                     newTotal = newTotal - oldTip + newTip;
                     dataChanged = true;
                 }
@@ -411,7 +422,7 @@ const App: React.FC = () => {
             {showMenu && (
                 <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right z-50">
                     <button 
-                        onClick={clearAssignments}
+                        onClick={requestClearAssignments}
                         className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                     >
                         <span className="material-icons text-lg text-orange-500">group_off</span>
@@ -419,7 +430,7 @@ const App: React.FC = () => {
                     </button>
                     <div className="border-t border-slate-100 my-1"></div>
                     <button 
-                        onClick={handleResetClick}
+                        onClick={requestReset}
                         className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
                     >
                         <span className="material-icons text-lg">restart_alt</span>
@@ -511,7 +522,42 @@ const App: React.FC = () => {
           </div>
       </div>
 
-      {/* Modals */}
+      {/* Confirmation Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
+           {/* Overlay click to cancel */}
+           <div className="absolute inset-0" onClick={() => setConfirmModal(null)}></div>
+           
+           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 relative z-10">
+              <div className="mb-4">
+                 <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+                    <span className="material-icons text-indigo-600 text-2xl">help_outline</span>
+                 </div>
+                 <h3 className="text-lg font-bold text-slate-800">{confirmModal.title}</h3>
+                 <p className="text-slate-500 mt-2 text-sm leading-relaxed">{confirmModal.message}</p>
+              </div>
+              <div className="flex gap-3 justify-end mt-6">
+                <button 
+                  onClick={() => setConfirmModal(null)}
+                  className="px-4 py-2 text-slate-600 font-semibold hover:bg-slate-100 rounded-lg transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    confirmModal.onConfirm();
+                    setConfirmModal(null);
+                  }}
+                  className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 shadow-md transition-all active:scale-95 text-sm"
+                >
+                  Confirm
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
       {selectedPerson && receiptData && (
         <PersonDetailModal 
           person={selectedPerson} 

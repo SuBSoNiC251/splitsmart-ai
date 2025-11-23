@@ -13,6 +13,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -29,8 +30,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
     setInput('');
   };
 
-  const handleMicClick = () => {
-    // Check for browser support
+  const toggleListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
@@ -38,12 +38,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
         return;
     }
 
+    // Stop if already listening
     if (isListening) {
-      return; 
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
     }
 
+    // Start listening
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = false; // Stop after one sentence
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
@@ -67,6 +73,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
       setIsListening(false);
     };
 
+    recognitionRef.current = recognition;
     try {
       recognition.start();
     } catch (e) {
@@ -167,16 +174,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
         <form onSubmit={handleSubmit} className="flex gap-2 items-center">
           <button
             type="button"
-            onClick={handleMicClick}
+            onClick={toggleListening}
             disabled={isProcessing}
             className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center shrink-0 ${
               isListening 
                 ? 'bg-red-50 text-red-600 animate-pulse border border-red-200' 
                 : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
             }`}
-            title="Speak your command"
+            title={isListening ? "Stop listening" : "Start voice input"}
           >
-            <span className="material-icons">{isListening ? 'mic' : 'mic_none'}</span>
+            <span className="material-icons">{isListening ? 'mic_off' : 'mic'}</span>
           </button>
 
           <input

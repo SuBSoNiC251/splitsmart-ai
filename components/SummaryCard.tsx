@@ -150,102 +150,86 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ receiptData, className, onPer
     const fullText = header + body + footer;
     
     navigator.clipboard.writeText(fullText).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
-  // Calculate Net Bill for display
-  let displayTotal = receiptData.total;
-  if (receiptData.discount) {
-     if (receiptData.discount.type === 'percentage') {
-         displayTotal = receiptData.total * (1 - receiptData.discount.value / 100);
-     } else {
-         displayTotal = Math.max(0, receiptData.total - receiptData.discount.value);
-     }
-  }
-
   return (
-    <div className={`bg-white md:rounded-xl shadow-none md:shadow-lg border-0 md:border border-slate-200 flex flex-col ${className}`}>
-      <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center shrink-0 sticky top-0 z-10">
-        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <span className="material-icons text-emerald-600">payments</span>
-          Split Summary
-        </h2>
-        
-        <button 
-            onClick={handleExport}
-            className="text-slate-600 hover:text-emerald-600 transition-colors flex items-center gap-1.5 text-xs font-bold bg-white border border-slate-300 px-3 py-2 rounded-lg shadow-sm hover:shadow active:scale-95 touch-manipulation"
-            title="Copy summary to clipboard"
-        >
-            <span className="material-icons text-[18px]">{copied ? 'check' : 'ios_share'}</span>
-            {copied ? 'Copied!' : 'Export'}
-        </button>
+    <div className={`bg-white shadow-none md:shadow-lg md:rounded-xl border-0 md:border border-slate-200 flex flex-col h-full overflow-hidden ${className}`}>
+      <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
+         <div className="flex items-center gap-2">
+            <div className="bg-emerald-100 text-emerald-600 p-1.5 rounded-lg">
+                <span className="material-icons text-lg block">pie_chart</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-800">Bill Split</h2>
+         </div>
+         <button
+           onClick={handleExport}
+           className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
+               copied 
+               ? 'bg-emerald-100 text-emerald-700' 
+               : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+           }`}
+         >
+            <span className="material-icons text-sm">{copied ? 'check' : 'content_copy'}</span>
+            {copied ? 'Copied!' : 'Copy'}
+         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pb-20 md:pb-3 bg-slate-50/30">
-        {summary.length === 0 && unassignedTotal === 0 ? (
-          <div className="text-center text-slate-400 py-12 text-sm flex flex-col items-center">
-            <span className="material-icons text-4xl mb-2 text-slate-300">group_add</span>
-            <p>No items assigned yet.</p>
-            <p className="text-xs mt-1">Use the chat to assign costs.</p>
-          </div>
+      <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50 space-y-3">
+        {summary.length === 0 ? (
+            <div className="text-center text-slate-400 mt-10">
+                <span className="material-icons text-4xl mb-2">groups</span>
+                <p className="text-sm">No assignments yet.</p>
+            </div>
         ) : (
-          <div className="space-y-3">
-             {unassignedTotal > 0.01 && (
-                <div className="mx-1 p-3.5 bg-orange-50 border border-orange-200 rounded-xl flex justify-between items-center shadow-sm">
-                    <span className="text-orange-800 text-sm font-bold flex items-center gap-2">
-                        <span className="material-icons text-[18px]">warning</span>
-                        Unassigned
-                    </span>
-                    <span className="font-bold text-orange-900">
-                        {currency}{unassignedTotal.toFixed(2)} <span className="text-[10px] opacity-70 font-normal">+tax</span>
-                    </span>
+            summary.map((person) => (
+                <div 
+                  key={person.name}
+                  onClick={() => onPersonSelect && onPersonSelect(person)}
+                  className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all group"
+                >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                         <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-xs shrink-0">
+                             {person.name.charAt(0).toUpperCase()}
+                         </div>
+                         <div className="min-w-0">
+                             <span className="block font-bold text-slate-800 truncate">{person.name}</span>
+                             <span className="text-xs text-slate-500 flex items-center gap-1">
+                                 {person.items.length} items
+                                 {person.isFixed && <span className="text-[10px] bg-slate-100 border border-slate-200 px-1 rounded text-slate-500 font-medium">FIXED</span>}
+                             </span>
+                         </div>
+                    </div>
+                    <div className="text-right">
+                        <span className="block font-bold text-lg text-slate-800 group-hover:text-emerald-600 transition-colors">
+                            {currency}{person.totalOwed.toFixed(2)}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full hidden group-hover:inline-block transition-all">
+                            View Details
+                        </span>
+                    </div>
                 </div>
-             )}
+            ))
+        )}
 
-            {summary.map((person) => (
-              <div 
-                key={person.name} 
-                onClick={() => onPersonSelect?.(person)}
-                className="mx-1 p-4 bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md hover:border-emerald-200 hover:bg-emerald-50/30 transition-all cursor-pointer group active:scale-[0.99] touch-manipulation"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
-                          {person.name.charAt(0).toUpperCase()}
-                      </div>
-                      <h3 className="font-bold text-slate-800 text-lg group-hover:text-emerald-800 flex flex-col leading-none">
-                          {person.name}
-                          {person.isFixed && <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded mt-1 self-start border border-slate-200 tracking-wide">FIXED AMOUNT</span>}
-                      </h3>
-                  </div>
-                  <div className="flex items-center gap-1">
-                      <span className="text-emerald-600 font-extrabold text-xl tracking-tight">
-                        {currency}{person.totalOwed.toFixed(2)}
-                      </span>
-                      <span className="material-icons text-slate-300 text-xl group-hover:text-emerald-400">chevron_right</span>
-                  </div>
+        {unassignedTotal > 0.01 && (
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-100 rounded-xl flex items-center gap-3">
+                <span className="material-icons text-orange-500">warning</span>
+                <div>
+                    <p className="text-xs font-bold text-orange-800">Unassigned Items</p>
+                    <p className="text-xs text-orange-700">
+                        Totaling {currency}{unassignedTotal.toFixed(2)} (+tax/tip)
+                    </p>
                 </div>
-                
-                <div className="text-xs text-slate-500 flex justify-between items-center pl-11">
-                    <span>{person.items.length} items</span>
-                    <span className="opacity-75">Base: {currency}{person.subtotalOwed.toFixed(2)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+            </div>
         )}
       </div>
       
-       <div className="p-4 bg-white border-t border-slate-200 text-xs text-center text-slate-500 flex flex-col gap-1 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shrink-0 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-4">
-           {receiptData.discount && (
-               <span className="text-emerald-600 font-bold bg-emerald-50 py-1 px-2 rounded-full self-center">
-                   Includes {receiptData.discount.type === 'percentage' ? `${receiptData.discount.value}%` : `${currency}${receiptData.discount.value}`} discount
-               </span>
-           )}
-           <span className="font-medium text-slate-900 text-sm mt-1">Net Total: {currency}{displayTotal.toFixed(2)}</span>
-       </div>
+      <div className="bg-white p-4 border-t border-slate-200 text-xs text-slate-400 text-center pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-4">
+          Total Distributed: {currency}{summary.reduce((a,b)=>a+b.totalOwed, 0).toFixed(2)}
+      </div>
     </div>
   );
 };

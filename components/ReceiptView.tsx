@@ -66,7 +66,7 @@ const ReceiptView: React.FC<ReceiptViewProps> = ({ data, originalImage, classNam
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-                <span className="material-icons text-[16px]">list</span>
+                <span className="material-icons text-list text-[16px]">list</span>
                 Parsed List
             </button>
             <button 
@@ -77,7 +77,7 @@ const ReceiptView: React.FC<ReceiptViewProps> = ({ data, originalImage, classNam
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-                <span className="material-icons text-[16px]">image</span>
+                <span className="material-icons text-image text-[16px]">image</span>
                 Original
             </button>
         </div>
@@ -161,7 +161,7 @@ const ReceiptView: React.FC<ReceiptViewProps> = ({ data, originalImage, classNam
       </div>
 
       {/* Footer */}
-      <div className="bg-white p-5 border-t border-slate-200 space-y-1.5 text-sm z-10 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="bg-white p-5 pr-20 md:pr-5 border-t border-slate-200 space-y-1.5 text-sm z-10 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between text-slate-600">
           <span>Subtotal</span>
           <span>{currency}{data.subtotal.toFixed(2)}</span>

@@ -255,9 +255,9 @@ export const processChatCommand = async (
     CRITICAL RULES:
     1. **Show Your Work:** Never provide a final number for a complex calculation (like a proportional split) without first showing the step-by-step math in your text response.
     2. **Logic & Math Validation:**
-       - **Impossible Splits:** If a user requests a percentage split (e.g., "50% to A, 50% to B, 20% to C"), verify it sums to 100%. If not (like 120%), REJECT the request and explain the error to the user. Do not call a tool.
-       - **Unequal/Percentage Splits:** If user says "Split Pizza 70/30", YOU must calculate the prices (Price * 0.7, Price * 0.3) and use 'split_item' to create "Pizza (70%)" and "Pizza (30%)".
-       - **Negative Items:** If user adds a negative amount (e.g. "Add a Bad Service Comp of -100"), use 'add_item' with -100.
+       - **Impossible Splits:** If a user requests a percentage split (e.g., "50% to A, 50% to B, 20% to C"), YOU MUST verify it sums to 100%. If it equals 120%, REJECT the request and explain the error to the user in text. Do not call a tool.
+       - **Unequal/Percentage Splits:** If user says "Split Pizza 70/30", YOU must calculate the prices manually (e.g. Price * 0.7, Price * 0.3) and use the 'split_item' tool to create "Pizza (70%)" and "Pizza (30%)" items.
+       - **Negative Items:** If user adds a negative amount (e.g. "Add a Bad Service Comp of -100"), use 'add_item' with a negative price value.
     
     3. **Tool Usage:** 
        - Use 'assign_items' to map people to items.
